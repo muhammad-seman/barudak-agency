@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import auth from './data/auth.json';
-
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 
 export function middleware(request) {
@@ -14,7 +12,9 @@ export function middleware(request) {
 
   // Check session cookie
   const sessionToken = request.cookies.get('ba_session')?.value;
-  const validToken = auth.AUTH_TOKEN;
+  
+  // Use environment variable for token check (faster than DB call in middleware)
+  const validToken = process.env.AUTH_TOKEN;
 
   if (!sessionToken || sessionToken !== validToken) {
     const loginUrl = new URL('/login', request.url);

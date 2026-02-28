@@ -1,30 +1,21 @@
-import { readData, writeData } from '@/lib/db';
+import { findById, updateData, deleteData } from '@/lib/db';
 
 export async function GET(request, { params }) {
   const { id } = await params;
-  const crew = readData('crew');
-  const member = crew.find((c) => c.id === id);
-  if (!member) return Response.json({ error: 'Not found' }, { status: 404 });
-  return Response.json(member);
+  const crewMember = await findById('crew', id);
+  if (!crewMember) return Response.json({ error: 'Not found' }, { status: 404 });
+  return Response.json(crewMember);
 }
 
 export async function PUT(request, { params }) {
   const { id } = await params;
   const body = await request.json();
-  const crew = readData('crew');
-  const idx = crew.findIndex((c) => c.id === id);
-  if (idx === -1) return Response.json({ error: 'Not found' }, { status: 404 });
-  crew[idx] = { ...crew[idx], ...body };
-  writeData('crew', crew);
-  return Response.json(crew[idx]);
+  const updated = await updateData('crew', id, body);
+  return Response.json(updated);
 }
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const crew = readData('crew');
-  const filtered = crew.filter((c) => c.id !== id);
-  if (filtered.length === crew.length)
-    return Response.json({ error: 'Not found' }, { status: 404 });
-  writeData('crew', filtered);
+  await deleteData('crew', id);
   return Response.json({ success: true });
 }

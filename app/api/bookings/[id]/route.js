@@ -1,9 +1,13 @@
-import { readData, writeData } from '@/lib/db';
+import { findById, updateData, deleteData, readData } from '@/lib/db';
 
 const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-function enrichBooking(booking, clients, crew) {
+// Enrich a booking with full client and crew objects (keyed by crewAssignments)
+async function enrichBooking(booking) {
   const assignments = booking.crewAssignments || [];
+  const clients = await readData('clients');
+  const crew = await readData('crew');
+
   return {
     ...booking,
     client: clients.find((c) => c.id === booking.clientId) || null,
@@ -16,21 +20,15 @@ function enrichBooking(booking, clients, crew) {
 
 export async function GET(request, { params }) {
   const { id } = await params;
-  const bookings = readData('bookings');
-  const booking = bookings.find((b) => b.id === id);
+  const booking = await findById('bookings', id);
   if (!booking) return Response.json({ error: 'Not found' }, { status: 404 });
 
-  const clients = readData('clients');
-  const crew = readData('crew');
-  return Response.json(enrichBooking(booking, clients, crew));
+  return Response.json(await enrichBooking(booking));
 }
 
 export async function PUT(request, { params }) {
   const { id } = await params;
   const body = await request.json();
-  const bookings = readData('bookings');
-  const idx = bookings.findIndex((b) => b.id === id);
-  if (idx === -1) return Response.json({ error: 'Not found' }, { status: 404 });
 
   if (body.tanggal) {
     const date = new Date(body.tanggal);
@@ -64,17 +62,12 @@ export async function PUT(request, { params }) {
     delete body.nominalDibayar;
   }
 
-  bookings[idx] = { ...bookings[idx], ...body };
-  writeData('bookings', bookings);
-  return Response.json(bookings[idx]);
+  const updated = await updateData('bookings', id, body);
+  return Response.json(updated);
 }
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const bookings = readData('bookings');
-  const filtered = bookings.filter((b) => b.id !== id);
-  if (filtered.length === bookings.length)
-    return Response.json({ error: 'Not found' }, { status: 404 });
-  writeData('bookings', filtered);
+  await deleteData('bookings', id);
   return Response.json({ success: true });
 }

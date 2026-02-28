@@ -1,4 +1,4 @@
-import { readData, writeData, generateId } from '@/lib/db';
+import { readData, insertData, generateId } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,11 +19,11 @@ function enrichBooking(booking, clients, crew) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const categoryParam = searchParams.get('category'); // "wo,wcc"
-  const monthParam = searchParams.get('month'); // "2026-03", "2026-", or "-03"
+  const categoryParam = searchParams.get('category');
+  const monthParam = searchParams.get('month');
   const clientId = searchParams.get('clientId');
 
-  let bookings = readData('bookings');
+  let bookings = await readData('bookings');
   
   if (categoryParam && categoryParam !== 'all') {
     const targetCats = categoryParam.split(',');
@@ -39,31 +39,27 @@ export async function GET(request) {
 
   if (clientId && clientId !== 'all') bookings = bookings.filter((b) => b.clientId === clientId);
 
-  const clients = readData('clients');
-  const crew = readData('crew');
+  const clients = await readData('clients');
+  const crew = await readData('crew');
 
   return Response.json(bookings.map((b) => enrichBooking(b, clients, crew)));
 }
 
 export async function POST(request) {
   const body = await request.json();
-  const bookings = readData('bookings');
 
   const date = new Date(body.tanggal);
   const hari = DAYS[date.getDay()];
 
-  // crewAssignments: [{ crewId, jobRole }]
   const crewAssignments = (body.crewAssignments || []).map((a) => ({
     crewId: a.crewId,
     jobRole: a.jobRole || '',
   }));
 
-  // pricing: [{ label: "Harga Jasa", amount: 5000000 }, { label: "Transport", amount: 300000 }, ...]
   const pricing = (body.pricing || []).map((p) => ({
     label: p.label || 'Biaya',
     amount: Number(p.amount) || 0,
   }));
-  // harga total = sum of all pricing items
   const harga = pricing.reduce((s, p) => s + p.amount, 0);
 
   const newBooking = {
@@ -85,7 +81,6 @@ export async function POST(request) {
     createdAt: new Date().toISOString().split('T')[0],
   };
 
-  bookings.push(newBooking);
-  writeData('bookings', bookings);
+  await insertData('bookings', newBooking);
   return Response.json(newBooking, { status: 201 });
 }

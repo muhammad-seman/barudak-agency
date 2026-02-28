@@ -1,14 +1,18 @@
-import auth from '@/data/auth.json';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request) {
   const body = await request.json();
   const { username, password } = body;
 
-  const validUsername = auth.AUTH_USERNAME;
-  const validPassword = auth.AUTH_PASSWORD;
-  const token = auth.AUTH_TOKEN;
+  // Fetch auth from Supabase
+  const { data: auth, error } = await supabase
+    .from('auth')
+    .select('*')
+    .eq('username', username)
+    .eq('password', password)
+    .single();
 
-  if (username !== validUsername || password !== validPassword) {
+  if (error || !auth) {
     return Response.json({ error: 'Username atau password salah.' }, { status: 401 });
   }
 
@@ -16,7 +20,7 @@ export async function POST(request) {
   const isProd = process.env.NODE_ENV === 'production';
   response.headers.set(
     'Set-Cookie',
-    `ba_session=${token}; Path=/; HttpOnly; SameSite=Lax; ${isProd ? 'Secure;' : ''} Max-Age=${60 * 60 * 24 * 30}`
+    `ba_session=${auth.token}; Path=/; HttpOnly; SameSite=Lax; ${isProd ? 'Secure;' : ''} Max-Age=${60 * 60 * 24 * 30}`
   );
   return response;
 }
