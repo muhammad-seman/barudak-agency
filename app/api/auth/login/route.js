@@ -4,6 +4,11 @@ export async function POST(request) {
   const body = await request.json();
   const { username, password } = body;
 
+  if (!supabase) {
+    console.error('Supabase client not initialized. Check your environment variables.');
+    return Response.json({ error: 'Konfigurasi database (Supabase) belum diatur di Vercel.' }, { status: 500 });
+  }
+
   // Fetch auth from Supabase
   const { data: auth, error } = await supabase
     .from('auth')
