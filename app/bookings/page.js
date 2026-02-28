@@ -171,18 +171,18 @@ export default function BookingsPage() {
                   <table>
                     <thead>
                       <tr>
-                        <th className="hidden-mobile" style={{ width: 40 }}>#</th>
-                        <th style={{ minWidth: 140 }}>Pasangan</th>
-                        <th className="hidden-mobile" style={{ minWidth: 150 }}>WhatsApp Client</th>
-                        <th style={{ minWidth: 120 }}>Tanggal</th>
-                        <th className="hidden-mobile" style={{ minWidth: 140 }}>Layanan</th>
-                        <th className="hidden-mobile">Lokasi</th>
-                        <th className="hidden-mobile">Package WO</th>
-                        <th className="hidden-mobile" style={{ minWidth: 130 }}>Harga Total</th>
-                        <th className="hidden-mobile" style={{ minWidth: 80 }}>Kru</th>
-                        <th className="hidden-mobile" style={{ minWidth: 130 }}>Status</th>
-                        <th className="hidden-mobile" style={{ width: 130 }}>Aksi</th>
-                        <th className="hidden-desktop" style={{ width: 40 }}></th>
+                        <th className="hidden-mobile" style={{ width: '40px' }}>#</th>
+                        <th style={{ minWidth: '160px' }}>Pasangan</th>
+                        <th className="hidden-mobile" style={{ width: '100px' }}>WhatsApp</th>
+                        <th style={{ minWidth: '110px' }}>Tanggal</th>
+                        <th className="hidden-mobile" style={{ minWidth: '140px' }}>Layanan</th>
+                        <th className="hidden-mobile" style={{ minWidth: '120px' }}>Lokasi</th>
+                        <th className="hidden-mobile" style={{ minWidth: '110px' }}>Package</th>
+                        <th className="hidden-mobile" style={{ minWidth: '130px' }}>Harga Total</th>
+                        <th className="hidden-mobile" style={{ minWidth: '140px' }}>Kru</th>
+                        <th className="hidden-mobile" style={{ minWidth: '130px' }}>Status</th>
+                        <th className="hidden-mobile" style={{ width: '100px' }}>Aksi</th>
+                        <th className="hidden-desktop" style={{ width: '40px' }}></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -191,7 +191,7 @@ export default function BookingsPage() {
                         return (
                           <React.Fragment key={b.id}>
                             <tr onClick={() => toggleExpand(b.id)} style={{ cursor: 'pointer' }}>
-                              <td className="text-muted hidden-mobile">{i + 1}</td>
+                              <td className="hidden-mobile text-muted" style={{ textAlign: 'center' }}>{i + 1}</td>
                               <td>
                                 <div style={{ fontWeight: 700 }}>{b.client?.namaPasangan || '—'}</div>
                                 <div className="text-muted" style={{ fontSize: 11 }}>{b.catatan}</div>
@@ -199,13 +199,13 @@ export default function BookingsPage() {
                               <td className="hidden-mobile">
                                 {b.client?.noWA ? (
                                   <a className="wa-link" href={`https://wa.me/${b.client.noWA}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                                    <LuMessageCircle size={14} /> WA
+                                    <LuMessageCircle size={14} /> WhatsApp
                                   </a>
                                 ) : '—'}
                               </td>
                               <td style={{ whiteSpace: 'nowrap' }}>
                                 <div style={{ fontWeight: 600 }}>{b.tanggal}</div>
-                                <div className="text-muted">{b.hari}</div>
+                                <div className="text-muted" style={{ fontSize: 11 }}>{b.hari}</div>
                               </td>
                               <td className="hidden-mobile">
                                 <div className="flex gap-1" style={{ flexWrap: 'wrap' }}>
@@ -231,33 +231,34 @@ export default function BookingsPage() {
                                 )}
                               </td>
                               <td className="hidden-mobile">
-                                <div className="crew-chips">
-                                  {b.crew?.length > 0
-                                    ? b.crew.map((c, idx) => (
-                                        <span key={`${c.id}-${idx}`} className="crew-chip" title={c.jobRole}>
-                                          {c.name}{c.jobRole ? ` · ${c.jobRole}` : ''}
-                                        </span>
-                                      ))
-                                    : <span className="text-muted">—</span>}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                  {b.crew?.slice(0, 3).map((c, idx) => (
+                                    <div key={idx} style={{ fontSize: 11, background: 'rgba(255,255,255,0.03)', padding: '2px 6px', borderRadius: 4, whiteSpace: 'nowrap' }}>
+                                      {c.name} <span style={{ opacity: 0.5, fontSize: 9 }}>({c.jobRole})</span>
+                                    </div>
+                                  ))}
+                                  {b.crew?.length > 3 && <div style={{ fontSize: 10, color: 'var(--text-muted)', paddingLeft: 6 }}>+{b.crew.length - 3} lainnya</div>}
+                                  {(!b.crew || b.crew.length === 0) && <span className="text-muted">—</span>}
                                 </div>
                               </td>
                               <td className="hidden-mobile">
                                 <PaymentBadge status={b.payment?.status} nominalDibayar={b.payment?.nominalDibayar} />
                               </td>
                               <td className="hidden-mobile">
-                                <div className="flex gap-2" style={{ whiteSpace: 'nowrap' }}>
+                                <div className="flex gap-1">
                                   <button 
                                     className="btn btn-secondary btn-sm" 
-                                    title="Download Info PDF"
+                                    style={{ padding: '4px 8px' }}
+                                    title="Print PDF"
                                     onClick={(e) => { e.stopPropagation(); window.open(`/bookings/print/${b.id}`, '_blank'); }}
                                   >
-                                    <LuFileText size={14} />
+                                    <LuPrinter size={14} />
                                   </button>
-                                  <Link href={`/bookings/${b.id}`} className="btn btn-secondary btn-sm" onClick={(e) => e.stopPropagation()}><LuPencil size={12} /></Link>
-                                  <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); setDeleteId(b.id); }}><LuTrash2 size={12} /></button>
+                                  <Link href={`/bookings/${b.id}`} className="btn btn-secondary btn-sm" style={{ padding: '4px 8px' }} onClick={(e) => e.stopPropagation()}><LuPencil size={12} /></Link>
+                                  <button className="btn btn-danger btn-sm" style={{ padding: '4px 8px' }} onClick={(e) => { e.stopPropagation(); setDeleteId(b.id); }}><LuTrash2 size={12} /></button>
                                 </div>
                               </td>
-                              <td className="mobile-chevron-td hidden-desktop">
+                              <td className="hidden-desktop" style={{ textAlign: 'center' }}>
                                 <div className="mobile-chevron">
                                   {expandedId === b.id ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
                                 </div>
