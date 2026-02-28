@@ -1,11 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Link from 'next/link';
 import {
   LuCreditCard, LuClipboardList, LuCalendarDays, LuHeart,
-  LuUsers, LuClock, LuPlus, LuMessageCircle,
-  LuCircleCheck, LuCircleDot, LuCircleX,
+  LuUsers, LuClock, LuPlus, LuChevronDown, LuChevronUp,
 } from 'react-icons/lu';
 
 const CATEGORY_LABEL = {
@@ -17,16 +16,6 @@ const CATEGORY_LABEL = {
 
 function formatRupiah(num) {
   return 'Rp ' + Number(num).toLocaleString('id-ID');
-}
-
-function PaymentBadge({ status }) {
-  const map = {
-    paid: ['paid', <><LuCircleCheck size={10} /> Lunas</>],
-    partial: ['partial', <><LuCircleDot size={10} /> Sebagian</>],
-    unpaid: ['unpaid', <><LuCircleX size={10} /> Belum Bayar</>],
-  };
-  const [cls, label] = map[status] || map.unpaid;
-  return <span className={`badge badge-${cls}`}>{label}</span>;
 }
 
 function CategoryBadge({ cat }) {
@@ -46,7 +35,10 @@ export default function Dashboard() {
   const [bookings, setBookings] = useState([]);
   const [clients, setClients] = useState([]);
   const [crew, setCrew] = useState([]);
+  const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
 
   useEffect(() => {
     Promise.all([
@@ -62,9 +54,9 @@ export default function Dashboard() {
   const pending = bookings.filter((b) => b.payment?.status !== 'paid').length;
   const thisMonth = new Date().toISOString().slice(0, 7);
   const thisMonthBookings = bookings.filter((b) => b.tanggal?.startsWith(thisMonth));
-  const recentBookings = [...bookings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
+  
   const catCount = ['wo', 'wedding_planner', 'mcc', 'wcc'].map((cat) => ({
-    cat, count: bookings.filter((b) => b.category === cat).length,
+    cat, count: bookings.filter((b) => b.categories?.includes(cat)).length,
   }));
 
   const stats = [
@@ -75,6 +67,10 @@ export default function Dashboard() {
     { label: 'Total Kru', value: crew.length },
     { label: 'Belum / Sebagian Bayar', value: pending },
   ];
+
+  const recentBookings = [...bookings]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 6);
 
   return (
     <div className="layout">
@@ -105,7 +101,6 @@ export default function Dashboard() {
                 })}
               </div>
 
-              {/* Category counts */}
               <div className="card mb-6">
                 <div className="fw-700 mb-4" style={{ fontSize: 15 }}>Booking per Kategori</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
@@ -118,7 +113,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Recent bookings */}
               <div className="card">
                 <div className="flex items-center justify-between mb-4">
                   <div className="fw-700" style={{ fontSize: 15 }}>Booking Terbaru</div>
@@ -132,26 +126,59 @@ export default function Dashboard() {
                       <thead>
                         <tr>
                           <th>Pasangan</th>
-                          <th>Kategori</th>
+                          <th className="hidden-mobile">Kategori</th>
                           <th>Tanggal</th>
-                          <th>Harga</th>
-                          <th>Pembayaran</th>
+                          <th className="hidden-mobile">Harga</th>
+                          <th className="hidden-desktop" style={{ width: 40, padding: 0 }}></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {recentBookings.map((b) => (
-                          <tr key={b.id}>
-                            <td>
-                              <Link href={`/bookings/${b.id}`} style={{ color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 600 }}>
-                                {b.client?.namaPasangan || '—'}
-                              </Link>
-                            </td>
-                            <td><CategoryBadge cat={b.category} /></td>
-                            <td style={{ whiteSpace: 'nowrap' }}>{b.hari}, {b.tanggal}</td>
-                            <td style={{ color: 'var(--gold)', fontWeight: 600 }}>{formatRupiah(b.harga)}</td>
-                            <td><PaymentBadge status={b.payment?.status} /></td>
-                          </tr>
-                        ))}
+                        {recentBookings.map((b) => {
+                          const allCategories = b.categories?.length > 0 ? b.categories : (b.category ? [b.category] : []);
+                          return (
+                            <React.Fragment key={b.id}>
+                              <tr onClick={() => toggleExpand(b.id)} style={{ cursor: 'pointer' }}>
+                                <td>
+                                  <Link href={`/bookings/${b.id}`} style={{ color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 600 }}>
+                                    {b.client?.namaPasangan || '—'}
+                                  </Link>
+                                </td>
+                                <td className="hidden-mobile">
+                                  <div className="flex gap-1">
+                                    {allCategories.map(c => <CategoryBadge key={c} cat={c} />)}
+                                  </div>
+                                </td>
+                                <td style={{ whiteSpace: 'nowrap' }}>{b.hari}, {b.tanggal}</td>
+                                <td className="hidden-mobile" style={{ color: 'var(--gold)', fontWeight: 600 }}>{formatRupiah(b.harga)}</td>
+                                <td className="mobile-chevron-td hidden-desktop">
+                                  <div className="mobile-chevron">
+                                    {expandedId === b.id ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
+                                  </div>
+                                </td>
+                              </tr>
+                              {expandedId === b.id && (
+                                <tr className="accordion-row hidden-desktop">
+                                  <td colSpan={5} style={{ padding: 0 }}>
+                                    <div className="accordion-content">
+                                      <div className="accordion-item">
+                                        <span className="accordion-label">Kategori</span>
+                                        <span className="accordion-value">
+                                          <div className="flex gap-1" style={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                            {allCategories.map(c => <CategoryBadge key={c} cat={c} />)}
+                                          </div>
+                                        </span>
+                                      </div>
+                                      <div className="accordion-item">
+                                        <span className="accordion-label">Harga</span>
+                                        <span className="accordion-value" style={{ color: 'var(--gold)' }}>{formatRupiah(b.harga)}</span>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

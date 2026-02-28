@@ -12,6 +12,11 @@ const CATEGORIES = [
   { key: 'wcc', label: 'Wedding Content Creator' },
 ];
 
+const MASTER_ROLES = [
+  'Lead Kru', 'Kru Biasa', 'MC', 'WCC', 'Wedding Planner',
+  'Videografer', 'Fotografer', 'Asisten', 'Lainnya'
+];
+
 const PAYMENT_STATUS = [
   { key: 'unpaid', label: 'Belum Bayar' },
   { key: 'partial', label: 'Sebagian' },
@@ -28,7 +33,7 @@ export default function BookingFormPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     clientId: '',
-    category: 'wo',
+    categories: ['wo'],
     tanggal: '',
     lokasi: '',
     package: '',
@@ -52,25 +57,28 @@ export default function BookingFormPage() {
       setCrew(cr);
     });
 
-    if (isEdit) {
+    if (params.id && params.id !== 'new') {
+      setLoading(true);
       fetch(`/api/bookings/${params.id}`)
-        .then((r) => r.json())
-        .then((b) => {
+        .then((res) => res.json())
+        .then((mainBooking) => {
+          
           setForm({
-            clientId: b.clientId,
-            category: b.category,
-            tanggal: b.tanggal,
-            lokasi: b.lokasi,
-            package: b.package,
-            pricing: b.pricing?.length > 0 ? b.pricing : [{ label: 'Harga Jasa', amount: b.harga || '' }],
-            paymentStatus: b.payment?.status,
-            nominalDibayar: b.payment?.nominalDibayar || '',
-            crewAssignments: b.crewAssignments || [],
-            catatan: b.catatan || '',
+            clientId: mainBooking.clientId,
+            categories: mainBooking.categories?.length > 0 ? mainBooking.categories : (mainBooking.category ? [mainBooking.category] : ['wo']),
+            tanggal: mainBooking.tanggal,
+            lokasi: mainBooking.lokasi,
+            package: mainBooking.package,
+            pricing: mainBooking.pricing?.length > 0 ? mainBooking.pricing : [{ label: 'Harga Jasa', amount: mainBooking.harga || '' }],
+            paymentStatus: mainBooking.payment?.status,
+            nominalDibayar: mainBooking.payment?.nominalDibayar || '',
+            crewAssignments: mainBooking.crewAssignments || [],
+            catatan: mainBooking.catatan || '',
           });
+          setLoading(false);
         });
     }
-  }, [isEdit, params?.id]);
+  }, [params.id]);
 
   // Toggle crew member — if unchecking, remove. If checking, add with default jobRole from master crew.
   const handleCrewToggle = (crewMember) => {
@@ -80,7 +88,7 @@ export default function BookingFormPage() {
         ...f,
         crewAssignments: exists
           ? f.crewAssignments.filter((a) => a.crewId !== crewMember.id)
-          : [...f.crewAssignments, { crewId: crewMember.id, jobRole: crewMember.role }],
+          : [...f.crewAssignments, { crewId: crewMember.id, jobRole: Array.isArray(crewMember.role) && crewMember.role.length > 0 ? crewMember.role[0] : (crewMember.role || '') }],
       };
     });
   };
@@ -111,28 +119,37 @@ export default function BookingFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     const totalHarga = form.pricing.reduce((s, p) => s + (Number(p.amount) || 0), 0);
-    if (!form.clientId || !form.tanggal || !form.lokasi || !form.package || totalHarga === 0) {
-      return alert('Mohon lengkapi semua field wajib dan tambahkan minimal satu harga.');
+    if (!form.clientId || !form.tanggal || !form.lokasi || !form.package || totalHarga === 0 || (!isEdit && (!form.categories || form.categories.length === 0))) {
+      return alert('Mohon lengkapi semua field wajib (termasuk minimal satu kategori dan harga).');
     }
     setLoading(true);
-    const method = isEdit ? 'PUT' : 'POST';
-    const url = isEdit ? `/api/bookings/${params.id}` : '/api/bookings';
-    await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form), // crewAssignments sent as-is
-    });
+
+    if (isEdit) {
+      await fetch(`/api/bookings/${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+    } else {
+      await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+    }
+    
     router.push('/bookings');
   };
 
-  // Only show crew whose activeCategories include the selected category
+  // Only show crew whose activeCategories include any of the selected categories
   const filteredCrew = crew.filter((c) =>
-    c.activeCategories?.includes(form.category)
+    form.categories?.some(cat => c.activeCategories?.includes(cat))
   );
-  // Also include all-category crew that aren't category-specific (shows full crew pool)
+  // Also include all-category crew that aren't category-specific
   const allOtherCrew = crew.filter((c) =>
-    !c.activeCategories?.includes(form.category)
+    !form.categories?.some(cat => c.activeCategories?.includes(cat))
   );
 
   return (
@@ -153,9 +170,19 @@ export default function BookingFormPage() {
                 {/* Kategori */}
                 <div className="form-group">
                   <label className="form-label">Kategori Layanan *</label>
-                  <select className="select" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, crewIds: [] })}>
-                    {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-                  </select>
+                  <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                    {CATEGORIES.map((c) => (
+                      <label key={c.key} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 8, border: '1px solid ' + (form.categories?.includes(c.key) ? 'var(--gold)' : 'var(--border)'), cursor: 'pointer' }}>
+                        <input type="checkbox" checked={form.categories?.includes(c.key)} onChange={(e) => {
+                          const newCats = e.target.checked 
+                            ? [...(form.categories || []), c.key] 
+                            : (form.categories || []).filter(cat => cat !== c.key);
+                          setForm({ ...form, categories: newCats });
+                        }} />
+                        <span style={{ fontSize: 13 }}>{c.label}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Klien */}
@@ -180,7 +207,7 @@ export default function BookingFormPage() {
                         <input className="input" placeholder="Contoh: Rizki & Annisa" value={newClient.namaPasangan} onChange={(e) => setNewClient({ ...newClient, namaPasangan: e.target.value })} />
                       </div>
                       <div className="form-group">
-                        <label className="form-label">Nomor WA *</label>
+                        <label className="form-label">No. WhatsApp *</label>
                         <input className="input" placeholder="628xxx" value={newClient.noWA} onChange={(e) => setNewClient({ ...newClient, noWA: e.target.value })} />
                       </div>
                       <div className="form-group full">
@@ -204,7 +231,7 @@ export default function BookingFormPage() {
                   <input className="input" placeholder="Nama gedung/lokasi" value={form.lokasi} onChange={(e) => setForm({ ...form, lokasi: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Package *</label>
+                  <label className="form-label">Package WO</label>
                   <input className="input" placeholder="Nama package" value={form.package} onChange={(e) => setForm({ ...form, package: e.target.value })} />
                 </div>
                 {/* Dynamic Pricing Breakdown */}
@@ -316,19 +343,19 @@ export default function BookingFormPage() {
                             <div style={{ flex: 1 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span style={{ fontWeight: 600, fontSize: 13 }}>{c.name}</span>
-                                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.role}</span>
                               </div>
                             </div>
                             {/* Job role input — only visible when checked */}
                             {isChecked && (
-                              <input
-                                className="input"
+                              <select
+                                className="select"
                                 style={{ flex: 1, maxWidth: 160, padding: '4px 10px', fontSize: 12.5 }}
-                                placeholder="Peran di job ini..."
                                 value={assignment?.jobRole || ''}
                                 onChange={(e) => handleCrewRoleChange(c.id, e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
-                              />
+                              >
+                                {(Array.isArray(c.role) ? c.role : (c.role ? [c.role] : [])).map((r) => <option key={r} value={r}>{r}</option>)}
+                              </select>
                             )}
                           </div>
                         </div>

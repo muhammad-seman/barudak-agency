@@ -1,10 +1,12 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Link from 'next/link';
 import {
   LuPlus, LuMessageCircle, LuPencil, LuTrash2,
   LuCircleCheck, LuCircleDot, LuCircleX, LuClipboardList,
+  LuChevronDown, LuChevronUp, LuList, LuCalendarDays, LuPrinter, LuUser, LuFileText
 } from 'react-icons/lu';
 
 const CATEGORIES = [
@@ -28,36 +30,68 @@ function PaymentBadge({ status, nominalDibayar }) {
   return <span className={`badge badge-${cls}`}>{label}</span>;
 }
 
-function getMonthOptions() {
-  const opts = [];
-  const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    opts.push({ val: d.toISOString().slice(0, 7), label: d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) });
-  }
-  return opts;
+function getYearOptions() {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: 7 }, (_, i) => (currentYear - 2 + i).toString());
+}
+
+function getMonthList() {
+  return [
+    { val: '01', label: 'Januari' }, { val: '02', label: 'Februari' }, { val: '03', label: 'Maret' },
+    { val: '04', label: 'April' }, { val: '05', label: 'Mei' }, { val: '06', label: 'Juni' },
+    { val: '07', label: 'Juli' }, { val: '08', label: 'Agustus' }, { val: '09', label: 'September' },
+    { val: '10', label: 'Oktober' }, { val: '11', label: 'November' }, { val: '12', label: 'Desember' }
+  ];
 }
 
 export default function BookingsPage() {
-  const [activeTab, setActiveTab] = useState('wo');
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedClient, setSelectedClient] = useState('all');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
+  
   const [bookings, setBookings] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [deleteId, setDeleteId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const monthOptions = getMonthOptions();
+
+  const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
+
+  useEffect(() => {
+    fetch('/api/clients').then(r => r.json()).then(setClients);
+  }, []);
 
   const fetchBookings = useCallback(() => {
     setLoading(true);
-    fetch(`/api/bookings?category=${activeTab}&month=${month}`)
+    let url = `/api/bookings?`;
+    if (selectedCategories.length > 0) url += `category=${selectedCategories.join(',')}&`;
+    if (selectedYear || selectedMonth) url += `month=${selectedYear || '-'}-${selectedMonth || '-'}&`;
+    if (selectedClient !== 'all') url += `clientId=${selectedClient}&`;
+    
+    fetch(url, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((data) => { setBookings(data); setLoading(false); });
-  }, [activeTab, month]);
+      .then((data) => {
+        // Sort descending by created date
+        data.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setBookings(data);
+        setLoading(false);
+      });
+  }, [selectedCategories, selectedClient, selectedYear, selectedMonth]);
 
   useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
-  const handleDelete = async (id) => {
-    if (!confirm('Hapus booking ini?')) return;
-    await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
-    fetchBookings();
+  const handleDelete = async () => {
+    if (!deleteId || submitting) return;
+    setSubmitting(true);
+    try {
+      await fetch(`/api/bookings/${deleteId}`, { method: 'DELETE' });
+      setDeleteId(null);
+      fetchBookings();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const totalRevenue = bookings.reduce((s, b) => s + (b.harga || 0), 0);
@@ -71,26 +105,58 @@ export default function BookingsPage() {
         <div className="topbar">
           <div>
             <div className="topbar-title">Data Booking</div>
-            <div className="topbar-sub">Rekap booking per kategori layanan</div>
+            <div className="topbar-sub">Seluruh riwayat event dan tagihan klien</div>
           </div>
           <Link href="/bookings/new" className="btn btn-primary"><LuPlus size={15} /> Tambah</Link>
         </div>
+        
         <div className="page-content">
-          <div className="tabs mb-5">
-            {CATEGORIES.map((cat) => (
-              <button key={cat.key} className={`tab-btn${activeTab === cat.key ? ' active' : ''}`} onClick={() => setActiveTab(cat.key)}>
-                {cat.label}
-              </button>
-            ))}
+          <div className="toolbar" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+            <div className="flex gap-2">
+              <select className="select" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} style={{ minWidth: 130 }}>
+                <option value="">Semua Bulan</option>
+                {getMonthList().map((o) => <option key={o.val} value={o.val}>{o.label}</option>)}
+              </select>
+              <select className="select" value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ minWidth: 100 }}>
+                <option value="">Semua Tahun</option>
+                {getYearOptions().map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            
+            <select className="select" value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)} style={{ minWidth: 180 }}>
+              <option value="all">Semua Klien</option>
+              {clients.map(c => <option key={c.id} value={c.id}>{c.namaPasangan}</option>)}
+            </select>
+
+            <span className="text-muted mobile-full-width" style={{ marginLeft: 'auto', fontSize: 13, whiteSpace: 'nowrap', paddingTop: 4 }}>
+              {bookings.length} event · sisa tagihan {formatRupiah(sisaTagihan)}
+            </span>
           </div>
 
-          <div className="toolbar">
-            <select className="select" value={month} onChange={(e) => setMonth(e.target.value)} style={{ minWidth: 180 }}>
-              {monthOptions.map((o) => <option key={o.val} value={o.val}>{o.label}</option>)}
-            </select>
-            <span className="text-muted">
-              {bookings.length} job · {formatRupiah(totalRevenue)} tagihan · {formatRupiah(totalMasuk)} masuk · sisa {formatRupiah(sisaTagihan)}
-            </span>
+          <div className="flex gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
+            <span className="text-muted" style={{ fontSize: 13, alignSelf: 'center', marginRight: 4 }}>Filter Layanan:</span>
+            {CATEGORIES.map(c => {
+              const isActive = selectedCategories.includes(c.key);
+              return (
+                <button 
+                  key={c.key} 
+                  className={`badge ${isActive ? 'badge-wo' : ''}`}
+                  style={{ 
+                    cursor: 'pointer', 
+                    opacity: isActive ? 1 : 0.6, 
+                    border: '1px solid var(--border)',
+                    background: isActive ? undefined : 'var(--bg-secondary)',
+                    color: isActive ? undefined : 'var(--text-primary)'
+                  }}
+                  onClick={() => {
+                    if (isActive) setSelectedCategories(selectedCategories.filter(k => k !== c.key));
+                    else setSelectedCategories([...selectedCategories, c.key]);
+                  }}
+                >
+                  {c.label}
+                </button>
+              )
+            })}
           </div>
 
           <div className="card" style={{ padding: 0 }}>
@@ -98,73 +164,187 @@ export default function BookingsPage() {
               : bookings.length === 0 ? (
                 <div className="empty-state">
                   <LuClipboardList size={36} style={{ margin: '0 auto 12px', display: 'block', color: 'var(--text-muted)' }} />
-                  <p>Belum ada booking {CATEGORIES.find(c => c.key === activeTab)?.label} bulan ini.</p>
+                  <p>Belum ada event booking ditemukan untuk filter ini.</p>
                 </div>
               ) : (
                 <div className="table-wrap">
                   <table>
                     <thead>
                       <tr>
-                        <th>#</th><th>Pasangan</th><th>WA</th>
-                        <th>Tanggal</th><th>Lokasi</th><th>Package</th>
-                        <th>Harga</th><th>Kru</th><th>Pembayaran</th><th></th>
+                        <th className="hidden-mobile" style={{ width: 40 }}>#</th>
+                        <th style={{ minWidth: 140 }}>Pasangan</th>
+                        <th className="hidden-mobile" style={{ minWidth: 150 }}>WhatsApp Client</th>
+                        <th style={{ minWidth: 120 }}>Tanggal</th>
+                        <th className="hidden-mobile" style={{ minWidth: 140 }}>Layanan</th>
+                        <th className="hidden-mobile">Lokasi</th>
+                        <th className="hidden-mobile">Package WO</th>
+                        <th className="hidden-mobile" style={{ minWidth: 130 }}>Harga Total</th>
+                        <th className="hidden-mobile" style={{ minWidth: 80 }}>Kru</th>
+                        <th className="hidden-mobile" style={{ minWidth: 130 }}>Status</th>
+                        <th className="hidden-mobile" style={{ width: 130 }}>Aksi</th>
+                        <th className="hidden-desktop" style={{ width: 40 }}></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {bookings.map((b, i) => (
-                        <tr key={b.id}>
-                          <td className="text-muted">{i + 1}</td>
-                          <td>
-                            <div style={{ fontWeight: 700 }}>{b.client?.namaPasangan || '—'}</div>
-                            <div className="text-muted" style={{ fontSize: 11 }}>{b.catatan}</div>
-                          </td>
-                          <td>
-                            {b.client?.noWA ? (
-                              <a className="wa-link" href={`https://wa.me/${b.client.noWA}`} target="_blank" rel="noreferrer">
-                                <LuMessageCircle size={14} /> WA
-                              </a>
-                            ) : '—'}
-                          </td>
-                          <td style={{ whiteSpace: 'nowrap' }}>
-                            <div style={{ fontWeight: 600 }}>{b.tanggal}</div>
-                            <div className="text-muted">{b.hari}</div>
-                          </td>
-                          <td style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.lokasi}</td>
-                          <td>
-                            <span style={{ background: 'var(--bg-secondary)', padding: '3px 8px', borderRadius: 6, fontSize: 12 }}>
-                              {b.package}
-                            </span>
-                          </td>
-                          <td style={{ fontWeight: 600, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
-                            <div>{formatRupiah(b.harga)}</div>
-                            {b.pricing?.length > 1 && (
-                              <div style={{ fontWeight: 400, fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-                                {b.pricing.map(p => `${p.label}: ${formatRupiah(p.amount)}`).join(' · ')}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            <div className="crew-chips">
-                              {b.crew?.length > 0
-                                ? b.crew.map((c) => (
-                                    <span key={c.id} className="crew-chip" title={c.jobRole}>
-                                      {c.name}{c.jobRole ? ` · ${c.jobRole}` : ''}
+                      {bookings.map((b, i) => {
+                        const allCategories = b.categories?.length > 0 ? b.categories : (b.category ? [b.category] : []);
+                        return (
+                          <React.Fragment key={b.id}>
+                            <tr onClick={() => toggleExpand(b.id)} style={{ cursor: 'pointer' }}>
+                              <td className="text-muted hidden-mobile">{i + 1}</td>
+                              <td>
+                                <div style={{ fontWeight: 700 }}>{b.client?.namaPasangan || '—'}</div>
+                                <div className="text-muted" style={{ fontSize: 11 }}>{b.catatan}</div>
+                              </td>
+                              <td className="hidden-mobile">
+                                {b.client?.noWA ? (
+                                  <a className="wa-link" href={`https://wa.me/${b.client.noWA}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+                                    <LuMessageCircle size={14} /> WA
+                                  </a>
+                                ) : '—'}
+                              </td>
+                              <td style={{ whiteSpace: 'nowrap' }}>
+                                <div style={{ fontWeight: 600 }}>{b.tanggal}</div>
+                                <div className="text-muted">{b.hari}</div>
+                              </td>
+                              <td className="hidden-mobile">
+                                <div className="flex gap-1" style={{ flexWrap: 'wrap' }}>
+                                  {allCategories.map(cat => (
+                                    <span key={cat} className="badge badge-wo" style={{ fontSize: 10, padding: '2px 6px' }}>
+                                      {CATEGORIES.find(c => c.key === cat)?.label || cat}
                                     </span>
-                                  ))
-                                : <span className="text-muted">—</span>}
-                            </div>
-                          </td>
-                          <td>
-                            <PaymentBadge status={b.payment?.status} nominalDibayar={b.payment?.nominalDibayar} />
-                          </td>
-                          <td>
-                            <div className="flex gap-2">
-                              <Link href={`/bookings/${b.id}`} className="btn btn-secondary btn-sm"><LuPencil size={12} /></Link>
-                              <button className="btn btn-danger btn-sm" onClick={() => handleDelete(b.id)}><LuTrash2 size={12} /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="hidden-mobile" style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.lokasi}</td>
+                              <td className="hidden-mobile">
+                                <span style={{ background: 'var(--bg-secondary)', padding: '3px 8px', borderRadius: 6, fontSize: 12 }}>
+                                  {b.package}
+                                </span>
+                              </td>
+                              <td className="hidden-mobile" style={{ fontWeight: 600, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
+                                <div>{formatRupiah(b.harga)}</div>
+                                {b.pricing?.length > 1 && (
+                                  <div style={{ fontWeight: 400, fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+                                    {b.pricing.map((p, idx) => `${p.label}: ${formatRupiah(p.amount)}`).join(' · ')}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="hidden-mobile">
+                                <div className="crew-chips">
+                                  {b.crew?.length > 0
+                                    ? b.crew.map((c, idx) => (
+                                        <span key={`${c.id}-${idx}`} className="crew-chip" title={c.jobRole}>
+                                          {c.name}{c.jobRole ? ` · ${c.jobRole}` : ''}
+                                        </span>
+                                      ))
+                                    : <span className="text-muted">—</span>}
+                                </div>
+                              </td>
+                              <td className="hidden-mobile">
+                                <PaymentBadge status={b.payment?.status} nominalDibayar={b.payment?.nominalDibayar} />
+                              </td>
+                              <td className="hidden-mobile">
+                                <div className="flex gap-2" style={{ whiteSpace: 'nowrap' }}>
+                                  <button 
+                                    className="btn btn-secondary btn-sm" 
+                                    title="Download Info PDF"
+                                    onClick={(e) => { e.stopPropagation(); window.open(`/bookings/print/${b.id}`, '_blank'); }}
+                                  >
+                                    <LuFileText size={14} />
+                                  </button>
+                                  <Link href={`/bookings/${b.id}`} className="btn btn-secondary btn-sm" onClick={(e) => e.stopPropagation()}><LuPencil size={12} /></Link>
+                                  <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); setDeleteId(b.id); }}><LuTrash2 size={12} /></button>
+                                </div>
+                              </td>
+                              <td className="mobile-chevron-td hidden-desktop">
+                                <div className="mobile-chevron">
+                                  {expandedId === b.id ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
+                                </div>
+                              </td>
+                            </tr>
+                            {expandedId === b.id && (
+                              <tr className="accordion-row hidden-desktop">
+                                <td colSpan={12} style={{ padding: 0 }}>
+                                  <div className="accordion-content">
+                                    <div className="accordion-item">
+                                      <span className="accordion-label">Status Bayar</span>
+                                      <span className="accordion-value">
+                                        <PaymentBadge status={b.payment?.status} nominalDibayar={b.payment?.nominalDibayar} />
+                                      </span>
+                                    </div>
+                                    <div className="accordion-item">
+                                      <span className="accordion-label">Kategori Layanan</span>
+                                      <span className="accordion-value">
+                                        <div className="flex gap-1" style={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                          {allCategories.map(cat => (
+                                            <span key={cat} className="badge badge-wo" style={{ fontSize: 10, padding: '2px 6px' }}>
+                                              {CATEGORIES.find(c => c.key === cat)?.label || cat}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </span>
+                                    </div>
+                                    <div className="accordion-item">
+                                      <span className="accordion-label">Harga Total</span>
+                                      <span className="accordion-value" style={{ color: 'var(--gold)' }}>
+                                        <div>{formatRupiah(b.harga)}</div>
+                                      </span>
+                                    </div>
+                                    <div className="accordion-item">
+                                      <span className="accordion-label">Package WO</span>
+                                      <span className="accordion-value">{b.package}</span>
+                                    </div>
+                                    <div className="accordion-item">
+                                      <span className="accordion-label">Kru Bertugas</span>
+                                      <span className="accordion-value">
+                                        <div className="crew-chips" style={{ justifyContent: 'flex-end' }}>
+                                          {b.crew?.length > 0
+                                            ? b.crew.map((c, idx) => (
+                                                <span key={`${c.id}-${idx}`} className="crew-chip" title={c.jobRole}>
+                                                  {c.name}{c.jobRole ? ` · ${c.jobRole}` : ''}
+                                                </span>
+                                              ))
+                                            : <span className="text-muted">—</span>}
+                                        </div>
+                                      </span>
+                                    </div>
+                                    <div className="accordion-item">
+                                      <span className="accordion-label">WhatsApp Client</span>
+                                      <span className="accordion-value">
+                                        {b.client?.noWA ? (
+                                          <a className="wa-link" href={`https://wa.me/${b.client.noWA}`} target="_blank" rel="noreferrer">
+                                            {b.client.noWA}
+                                          </a>
+                                        ) : '—'}
+                                      </span>
+                                    </div>
+                                    <div className="accordion-item" style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-start', gap: 10 }}>
+                                      <button 
+                                        className="btn btn-secondary btn-sm" 
+                                        onClick={(e) => { e.stopPropagation(); window.open(`/bookings/print/${b.id}`, '_blank'); }}
+                                        style={{ flex: 1, justifyContent: 'center' }}
+                                      >
+                                        <LuFileText size={14} /> Info
+                                      </button>
+                                      <Link href={`/bookings/${b.id}`} className="btn btn-secondary btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={(e) => e.stopPropagation()}>
+                                        <LuPencil size={14} /> Edit
+                                      </Link>
+                                      <button 
+                                        className="btn btn-danger btn-sm" 
+                                        style={{ flex: 1, justifyContent: 'center' }}
+                                        onClick={(e) => { e.stopPropagation(); setDeleteId(b.id); }}
+                                      >
+                                        <LuTrash2 size={14} /> Hapus
+                                      </button>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -172,6 +352,13 @@ export default function BookingsPage() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        title="Hapus Event Booking"
+        message={`Apakah Anda yakin ingin menghapus data event booking beserta layanannya? Tindakan ini tidak dapat dibatalkan.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

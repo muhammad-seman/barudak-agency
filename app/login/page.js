@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import Image from 'next/image';
 import {
   LuUser, LuLock, LuEye, LuEyeOff, LuCircleAlert, LuLogIn
 } from 'react-icons/lu';
@@ -58,11 +57,11 @@ function LoginForm() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <Image
+            <img
               src="/images/logo.PNG"
               alt="BarudakAgency"
-              width={80}
-              height={80}
+              width="80"
+              height="80"
               style={{ objectFit: 'contain', borderRadius: 12 }}
             />
           </div>

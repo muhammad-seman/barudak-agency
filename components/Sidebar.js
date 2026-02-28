@@ -9,9 +9,10 @@ import {
   LuCalendarDays,
   LuHeart,
   LuUsers,
-  LuMenu,
   LuX,
   LuLogOut,
+  LuUser,
+  LuSettings,
 } from 'react-icons/lu';
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/tasks', icon: LuCalendarDays, label: 'Jadwal & Kru' },
   { href: '/clients', icon: LuHeart, label: 'Klien' },
   { href: '/crew', icon: LuUsers, label: 'Master Kru' },
+  { href: '/settings', icon: LuSettings, label: 'Setting' },
 ];
 
 function NavLinks({ onClose }) {
@@ -78,7 +80,7 @@ export default function Sidebar() {
 
   const Brand = () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <Image src="/images/logo.PNG" alt="Logo" width={36} height={36}
+      <img src="/images/logo.PNG" alt="Logo" width="36" height="36"
         style={{ objectFit: 'contain', borderRadius: 8, flexShrink: 0 }} />
       <div>
         <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--gold)', lineHeight: 1.1 }}>BarudakAgency</div>
@@ -100,44 +102,21 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* ── Mobile overlay ── */}
-      <div className={`mobile-overlay${drawerOpen ? ' open' : ''}`} onClick={() => setDrawerOpen(false)} />
-
-      {/* ── Mobile drawer ── */}
-      <div className={`mobile-drawer${drawerOpen ? ' open' : ''}`}>
-        <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Brand />
-          <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex' }}>
-            <LuX size={22} />
-          </button>
-        </div>
-        <nav className="sidebar-nav">
-          <NavLinks onClose={() => setDrawerOpen(false)} />
-        </nav>
-        <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
-          <LogoutButton />
-        </div>
-      </div>
-
-      {/* ── Hamburger (fixed, mobile only) ── */}
-      <button
-        className="hamburger-btn"
-        onClick={() => setDrawerOpen(true)}
-        aria-label="Buka menu"
-        style={{ position: 'fixed', top: 11, left: 12, zIndex: 60 }}
-      >
-        <LuMenu size={20} />
-      </button>
+      {/* Mobile topbar title will now align left naturally */}
 
       {/* ── Bottom nav (mobile only) ── */}
       <nav className="bottom-nav">
         {navItems.map((item) => {
           const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
           const Icon = item.icon;
+          let label = item.label;
+          if (label === 'Master Kru') label = 'Master';
+          if (label === 'Jadwal & Kru') label = 'Jadwal';
+
           return (
             <Link key={item.href} href={item.href} className={`bottom-nav-item${isActive ? ' active' : ''}`}>
-              <Icon size={22} />
-              <span>{item.label.split(' ')[0]}</span>
+              <Icon size={20} />
+              <span style={{ fontSize: 10 }}>{label.split(' ')[0]}</span>
             </Link>
           );
         })}

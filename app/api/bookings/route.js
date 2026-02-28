@@ -1,5 +1,7 @@
 import { readData, writeData, generateId } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
 // Enrich a booking with full client and crew objects (keyed by crewAssignments)
@@ -17,14 +19,25 @@ function enrichBooking(booking, clients, crew) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const category = searchParams.get('category');
-  const month = searchParams.get('month'); // "2026-01"
+  const categoryParam = searchParams.get('category'); // "wo,wcc"
+  const monthParam = searchParams.get('month'); // "2026-03", "2026-", or "-03"
   const clientId = searchParams.get('clientId');
 
   let bookings = readData('bookings');
-  if (category) bookings = bookings.filter((b) => b.category === category);
-  if (month) bookings = bookings.filter((b) => b.tanggal.startsWith(month));
-  if (clientId) bookings = bookings.filter((b) => b.clientId === clientId);
+  
+  if (categoryParam && categoryParam !== 'all') {
+    const targetCats = categoryParam.split(',');
+    bookings = bookings.filter((b) => b.categories?.some(c => targetCats.includes(c)));
+  }
+
+  if (monthParam && monthParam !== '-') {
+    const [y, m] = monthParam.split('-');
+    if (y && m) bookings = bookings.filter((b) => b.tanggal.startsWith(`${y}-${m}`));
+    else if (y) bookings = bookings.filter((b) => b.tanggal.startsWith(y));
+    else if (m) bookings = bookings.filter((b) => b.tanggal.split('-')[1] === m);
+  }
+
+  if (clientId && clientId !== 'all') bookings = bookings.filter((b) => b.clientId === clientId);
 
   const clients = readData('clients');
   const crew = readData('crew');
@@ -56,7 +69,7 @@ export async function POST(request) {
   const newBooking = {
     id: generateId('bk'),
     clientId: body.clientId,
-    category: body.category,
+    categories: body.categories || [],
     tanggal: body.tanggal,
     hari,
     lokasi: body.lokasi,

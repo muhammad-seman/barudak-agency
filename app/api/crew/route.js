@@ -1,5 +1,7 @@
 import { readData, writeData, generateId } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const crew = readData('crew');
   return Response.json(crew);
