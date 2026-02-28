@@ -54,21 +54,11 @@ function LoginForm() {
       }} />
 
       <div style={{ width: '100%', maxWidth: 400, position: 'relative', zIndex: 1 }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <img
-              src="/images/logo.PNG"
-              alt="BarudakAgency"
-              width="80"
-              height="80"
-              style={{ objectFit: 'contain', borderRadius: 12 }}
-            />
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--gold)', letterSpacing: '-0.5px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--gold)', letterSpacing: '-1px', marginBottom: 6 }}>
             BarudakAgency
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
             Wedding Management System
           </p>
         </div>

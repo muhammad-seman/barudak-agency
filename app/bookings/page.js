@@ -128,9 +128,9 @@ export default function BookingsPage() {
               {clients.map(c => <option key={c.id} value={c.id}>{c.namaPasangan}</option>)}
             </select>
 
-            <span className="text-muted mobile-full-width" style={{ marginLeft: 'auto', fontSize: 13, whiteSpace: 'nowrap', paddingTop: 4 }}>
-              {bookings.length} event · sisa tagihan {formatRupiah(sisaTagihan)}
-            </span>
+            <div className="badge badge-secondary mobile-full-width" style={{ marginLeft: 'auto', padding: '10px 16px', fontSize: 13, border: '1px solid var(--border)', background: 'var(--bg-card)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', color: 'var(--text-secondary)' }}>
+              <span style={{ fontWeight: 800, color: 'var(--gold)' }}>{bookings.length}</span> event · sisa tagihan <span style={{ fontWeight: 800, color: 'var(--gold)' }}>{formatRupiah(sisaTagihan)}</span>
+            </div>
           </div>
 
           <div className="flex gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
