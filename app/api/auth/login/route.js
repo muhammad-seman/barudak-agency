@@ -1,10 +1,12 @@
+import auth from '@/data/auth.json';
+
 export async function POST(request) {
   const body = await request.json();
   const { username, password } = body;
 
-  const validUsername = process.env.AUTH_USERNAME;
-  const validPassword = process.env.AUTH_PASSWORD;
-  const token = process.env.AUTH_TOKEN;
+  const validUsername = auth.AUTH_USERNAME;
+  const validPassword = auth.AUTH_PASSWORD;
+  const token = auth.AUTH_TOKEN;
 
   if (username !== validUsername || password !== validPassword) {
     return Response.json({ error: 'Username atau password salah.' }, { status: 401 });
