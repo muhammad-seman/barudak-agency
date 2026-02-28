@@ -80,8 +80,7 @@ export default function Sidebar() {
 
   const Brand = () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <img src="/images/logo.PNG" alt="Logo" width="36" height="36"
-        style={{ objectFit: 'contain', borderRadius: 8, flexShrink: 0 }} />
+      {/* Logo Removed */}
       <div>
         <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--gold)', lineHeight: 1.1 }}>BarudakAgency</div>
         <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Wedding Mgmt</div>

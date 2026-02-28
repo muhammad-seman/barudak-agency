@@ -14,6 +14,11 @@ export function middleware(request) {
   const sessionToken = request.cookies.get('ba_session')?.value;
   const validToken = process.env.AUTH_TOKEN;
 
+  // If AUTH_TOKEN is missing in prod, we might have a config issue
+  if (!validToken && process.env.NODE_ENV === 'production') {
+    console.error('Middleware: AUTH_TOKEN is not defined in production environment.');
+  }
+
   if (!sessionToken || sessionToken !== validToken) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);
