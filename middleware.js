@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { supabase } from './lib/supabase';
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 
-export function middleware(request) {
+export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
   // Allow public paths
@@ -12,13 +13,30 @@ export function middleware(request) {
 
   // Check session cookie
   const sessionToken = request.cookies.get('ba_session')?.value;
-  
-  // Use environment variable for token check (faster than DB call in middleware)
-  const validToken = process.env.AUTH_TOKEN;
 
-  if (!sessionToken || sessionToken !== validToken) {
+  if (!sessionToken) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Validate token against Supabase
+  if (supabase) {
+    const { data: auth, error } = await supabase
+      .from('auth')
+      .select('token')
+      .eq('token', sessionToken)
+      .single();
+
+    if (error || !auth) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('from', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  } else {
+    // If supabase is not initialized (e.g. during build or missing env), 
+    // we might want to redirect to login if it's not a public path
+    const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }
 
