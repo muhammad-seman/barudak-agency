@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   LuCreditCard, LuClipboardList, LuCalendarDays, LuHeart,
   LuUsers, LuClock, LuPlus, LuMessageCircle,
-  LuCheckCircle2, LuCircleDot, LuXCircle,
+  LuCircleCheck, LuCircleDot, LuCircleX,
 } from 'react-icons/lu';
 
 const CATEGORY_LABEL = {
@@ -21,9 +21,9 @@ function formatRupiah(num) {
 
 function PaymentBadge({ status }) {
   const map = {
-    paid: ['paid', <><LuCheckCircle2 size={10} /> Lunas</>],
+    paid: ['paid', <><LuCircleCheck size={10} /> Lunas</>],
     partial: ['partial', <><LuCircleDot size={10} /> Sebagian</>],
-    unpaid: ['unpaid', <><LuXCircle size={10} /> Belum Bayar</>],
+    unpaid: ['unpaid', <><LuCircleX size={10} /> Belum Bayar</>],
   };
   const [cls, label] = map[status] || map.unpaid;
   return <span className={`badge badge-${cls}`}>{label}</span>;

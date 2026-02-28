@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import Image from 'next/image';
 import {
-  LuUser, LuLock, LuEye, LuEyeOff, LuAlertCircle, LuLogIn
+  LuUser, LuLock, LuEye, LuEyeOff, LuCircleAlert, LuLogIn
 } from 'react-icons/lu';
 
 function LoginForm() {
@@ -137,7 +137,7 @@ function LoginForm() {
                 background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)',
                 borderRadius: 8, padding: '10px 14px', color: 'var(--red)', fontSize: 13,
               }}>
-                <LuAlertCircle size={15} style={{ flexShrink: 0 }} />
+                <LuCircleAlert size={15} style={{ flexShrink: 0 }} />
                 {error}
               </div>
             )}

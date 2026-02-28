@@ -231,7 +231,7 @@ export default function BookingFormPage() {
                         />
                         <input
                           className="input"
-                          style={{ width: 180 }}
+                          style={{ minWidth: 90, flex: '0 1 140px' }}
                           type="number"
                           placeholder="Nominal"
                           value={item.amount}
@@ -323,7 +323,7 @@ export default function BookingFormPage() {
                             {isChecked && (
                               <input
                                 className="input"
-                                style={{ width: 160, padding: '4px 10px', fontSize: 12.5 }}
+                                style={{ flex: 1, maxWidth: 160, padding: '4px 10px', fontSize: 12.5 }}
                                 placeholder="Peran di job ini..."
                                 value={assignment?.jobRole || ''}
                                 onChange={(e) => handleCrewRoleChange(c.id, e.target.value)}
