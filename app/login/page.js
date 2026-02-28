@@ -1,10 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import Image from 'next/image';
+import {
+  LuUser, LuLock, LuEye, LuEyeOff, LuAlertCircle, LuLogIn
+} from 'react-icons/lu';
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from') || '/';
 
@@ -24,7 +27,8 @@ function LoginForm() {
         body: JSON.stringify(form),
       });
       if (res.ok) {
-        router.replace(from);
+        // Full page navigation to ensure middleware re-evaluates the new cookie
+        window.location.href = from.startsWith('/') ? from : '/';
       } else {
         const data = await res.json();
         setError(data.error || 'Login gagal.');
@@ -39,33 +43,30 @@ function LoginForm() {
     <div style={{
       minHeight: '100vh',
       background: 'var(--bg-primary)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      position: 'relative',
-      overflow: 'hidden',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '20px', position: 'relative', overflow: 'hidden',
     }}>
       {/* Background glow */}
       <div style={{
-        position: 'absolute',
-        width: 500, height: 500,
+        position: 'absolute', width: 500, height: 500,
         background: 'radial-gradient(circle, rgba(212,168,67,0.08) 0%, transparent 70%)',
-        top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
+        top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         pointerEvents: 'none',
       }} />
 
-      <div style={{
-        width: '100%',
-        maxWidth: 400,
-        position: 'relative',
-        zIndex: 1,
-      }}>
+      <div style={{ width: '100%', maxWidth: 400, position: 'relative', zIndex: 1 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ fontSize: 40, marginBottom: 10 }}>💍</div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--gold)', letterSpacing: '-0.5px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Image
+              src="/images/logo.PNG"
+              alt="BarudakAgency"
+              width={80}
+              height={80}
+              style={{ objectFit: 'contain', borderRadius: 12 }}
+            />
+          </div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--gold)', letterSpacing: '-0.5px' }}>
             BarudakAgency
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
@@ -75,10 +76,8 @@ function LoginForm() {
 
         {/* Card */}
         <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: 16,
-          padding: '32px 28px',
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 16, padding: '32px 28px',
           boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
         }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Masuk</h2>
@@ -87,24 +86,30 @@ function LoginForm() {
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Username */}
             <div className="form-group">
               <label className="form-label">Username</label>
-              <input
-                className="input"
-                style={{ width: '100%' }}
-                placeholder="Username"
-                autoComplete="username"
-                value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value })}
-              />
+              <div style={{ position: 'relative' }}>
+                <LuUser style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 16 }} />
+                <input
+                  className="input"
+                  style={{ paddingLeft: 38 }}
+                  placeholder="Username"
+                  autoComplete="username"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                />
+              </div>
             </div>
 
+            {/* Password */}
             <div className="form-group">
               <label className="form-label">Password</label>
               <div style={{ position: 'relative' }}>
+                <LuLock style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 16 }} />
                 <input
                   className="input"
-                  style={{ width: '100%', paddingRight: 44 }}
+                  style={{ paddingLeft: 38, paddingRight: 44 }}
                   type={showPw ? 'text' : 'password'}
                   placeholder="Password"
                   autoComplete="current-password"
@@ -115,25 +120,25 @@ function LoginForm() {
                   type="button"
                   onClick={() => setShowPw(!showPw)}
                   style={{
-                    position: 'absolute', right: 12, top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none', border: 'none',
-                    color: 'var(--text-muted)', cursor: 'pointer',
-                    fontSize: 16, lineHeight: 1, padding: 4,
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', color: 'var(--text-muted)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4,
                   }}
                 >
-                  {showPw ? '🙈' : '👁️'}
+                  {showPw ? <LuEyeOff size={17} /> : <LuEye size={17} />}
                 </button>
               </div>
             </div>
 
+            {/* Error */}
             {error && (
               <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
                 background: 'var(--red-bg)', border: '1px solid rgba(239,68,68,0.2)',
-                borderRadius: 8, padding: '10px 14px',
-                color: 'var(--red)', fontSize: 13,
+                borderRadius: 8, padding: '10px 14px', color: 'var(--red)', fontSize: 13,
               }}>
-                ⚠️ {error}
+                <LuAlertCircle size={15} style={{ flexShrink: 0 }} />
+                {error}
               </div>
             )}
 
@@ -143,7 +148,7 @@ function LoginForm() {
               style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: 15, marginTop: 4 }}
               disabled={loading}
             >
-              {loading ? 'Memverifikasi...' : '🔐 Masuk'}
+              {loading ? 'Memverifikasi...' : <><LuLogIn size={16} /> Masuk</>}
             </button>
           </form>
         </div>

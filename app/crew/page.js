@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
+import { LuPlus, LuPencil, LuTrash2, LuMessageCircle, LuUsers } from 'react-icons/lu';
 
 const CATEGORY_OPTIONS = [
   { key: 'wo', label: 'Wedding Organizer' },
@@ -8,6 +9,8 @@ const CATEGORY_OPTIONS = [
   { key: 'mcc', label: 'MC / Pembawa Acara' },
   { key: 'wcc', label: 'Wedding Content Creator' },
 ];
+
+const CAT_LABEL = { wo: 'WO', wedding_planner: 'WP', mcc: 'MC', wcc: 'WCC' };
 
 export default function CrewPage() {
   const [crew, setCrew] = useState([]);
@@ -71,11 +74,9 @@ export default function CrewPage() {
             <div className="topbar-title">Master Kru</div>
             <div className="topbar-sub">Kelola daftar kru dan kategori yang mereka tangani</div>
           </div>
-          <button className="btn btn-primary" onClick={openNew}>+ Tambah Kru</button>
+          <button className="btn btn-primary" onClick={openNew}><LuPlus size={15} /> Tambah Kru</button>
         </div>
         <div className="page-content">
-
-          {/* Modal */}
           {showForm && (
             <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>
               <div className="modal">
@@ -109,9 +110,14 @@ export default function CrewPage() {
                         <label className="form-label">Kategori Layanan yang Ditangani</label>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
                           {CATEGORY_OPTIONS.map((cat) => (
-                            <label key={cat.key} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: 8, border: `1px solid ${form.activeCategories.includes(cat.key) ? 'var(--gold)' : 'var(--border)'}`, cursor: 'pointer', transition: 'border-color 0.15s' }}>
+                            <label key={cat.key} style={{
+                              display: 'flex', alignItems: 'center', gap: 6,
+                              padding: '7px 12px', background: 'var(--bg-secondary)', borderRadius: 8,
+                              border: `1px solid ${form.activeCategories.includes(cat.key) ? 'var(--gold)' : 'var(--border)'}`,
+                              cursor: 'pointer', transition: 'border-color 0.15s', fontSize: 13,
+                            }}>
                               <input type="checkbox" style={{ accentColor: 'var(--gold)' }} checked={form.activeCategories.includes(cat.key)} onChange={() => toggleCat(cat.key)} />
-                              <span style={{ fontSize: 12.5, fontWeight: 500 }}>{cat.label}</span>
+                              {cat.label}
                             </label>
                           ))}
                         </div>
@@ -120,7 +126,7 @@ export default function CrewPage() {
                   </div>
                   <div className="modal-footer">
                     <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Batal</button>
-                    <button type="submit" className="btn btn-primary">{editId ? 'Simpan Perubahan' : 'Tambah Kru'}</button>
+                    <button type="submit" className="btn btn-primary">{editId ? 'Simpan' : 'Tambah Kru'}</button>
                   </div>
                 </form>
               </div>
@@ -132,13 +138,8 @@ export default function CrewPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Nama Kru</th>
-                    <th>WhatsApp</th>
-                    <th>Peran</th>
-                    <th>Kategori</th>
-                    <th>Status</th>
-                    <th></th>
+                    <th>#</th><th>Nama Kru</th><th>WhatsApp</th>
+                    <th>Peran</th><th>Kategori</th><th>Status</th><th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -149,7 +150,7 @@ export default function CrewPage() {
                       <td>
                         {c.noWA ? (
                           <a className="wa-link" href={`https://wa.me/${c.noWA}`} target="_blank" rel="noreferrer">
-                            💬 {c.noWA}
+                            <LuMessageCircle size={14} /> {c.noWA}
                           </a>
                         ) : '—'}
                       </td>
@@ -158,7 +159,7 @@ export default function CrewPage() {
                         <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
                           {(c.activeCategories || []).map((cat) => (
                             <span key={cat} className={`badge badge-${cat}`} style={{ fontSize: 10 }}>
-                              {{ wo: 'WO', wedding_planner: 'WP', mcc: 'MC', wcc: 'WCC' }[cat] || cat.toUpperCase()}
+                              {CAT_LABEL[cat] || cat.toUpperCase()}
                             </span>
                           ))}
                         </div>
@@ -170,14 +171,14 @@ export default function CrewPage() {
                       </td>
                       <td>
                         <div className="flex gap-2">
-                          <button className="btn btn-secondary btn-sm" onClick={() => openEdit(c)}>Edit</button>
-                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c.id)}>Hapus</button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => openEdit(c)}><LuPencil size={12} /></button>
+                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c.id)}><LuTrash2 size={12} /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
                   {crew.length === 0 && (
-                    <tr><td colSpan={7}><div className="empty-state"><div className="icon">👥</div><p>Belum ada data kru.</p></div></td></tr>
+                    <tr><td colSpan={7}><div className="empty-state"><LuUsers size={36} style={{ margin: '0 auto 12px', display: 'block', color: 'var(--text-muted)' }} /><p>Belum ada data kru.</p></div></td></tr>
                   )}
                 </tbody>
               </table>

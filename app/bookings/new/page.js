@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Link from 'next/link';
+import { LuSave, LuPlus, LuArrowLeft } from 'react-icons/lu';
 
 const CATEGORIES = [
   { key: 'wo', label: 'Wedding Organizer' },
@@ -143,7 +144,7 @@ export default function BookingFormPage() {
             <div className="topbar-title">{isEdit ? 'Edit Booking' : 'Tambah Booking Baru'}</div>
             <div className="topbar-sub">Isi data booking dengan lengkap</div>
           </div>
-          <Link href="/bookings" className="btn btn-secondary">← Kembali</Link>
+          <Link href="/bookings" className="btn btn-secondary"><LuArrowLeft size={14}/> Kembali</Link>
         </div>
         <div className="page-content">
           <form onSubmit={handleSubmit}>
@@ -361,7 +362,7 @@ export default function BookingFormPage() {
               <div className="flex gap-3 mt-4" style={{ justifyContent: 'flex-end' }}>
                 <Link href="/bookings" className="btn btn-secondary">Batal</Link>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? 'Menyimpan...' : isEdit ? '💾 Simpan Perubahan' : '✓ Tambah Booking'}
+                  {loading ? 'Menyimpan...' : isEdit ? <><LuSave size={14}/> Simpan</> : <><LuPlus size={14}/> Tambah Booking</>}
                 </button>
               </div>
             </div>
