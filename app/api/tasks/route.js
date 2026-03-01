@@ -4,11 +4,11 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const month = searchParams.get('month');
 
-  let bookings = readData('bookings');
+  let bookings = await readData('bookings');
   if (month) bookings = bookings.filter((b) => b.tanggal.startsWith(month));
 
-  const clients = readData('clients');
-  const crew = readData('crew');
+  const clients = await readData('clients');
+  const crew = await readData('crew');
 
   // Enrich with crew (including per-job role)
   const enriched = bookings.map((b) => {

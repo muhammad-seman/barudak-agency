@@ -58,6 +58,7 @@ export async function POST(request) {
 
   const pricing = (body.pricing || []).map((p) => ({
     label: p.label || 'Biaya',
+    desc: p.desc || '',
     amount: Number(p.amount) || 0,
   }));
   const harga = pricing.reduce((s, p) => s + p.amount, 0);

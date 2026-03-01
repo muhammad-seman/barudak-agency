@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Link from 'next/link';
 import {
-  LuPlus, LuPencil, LuChevronLeft, LuChevronRight, LuCalendarDays
+  LuPlus, LuPencil, LuChevronLeft, LuChevronRight, LuCalendarDays, LuChevronDown
 } from 'react-icons/lu';
 
 const CATEGORY_LABEL = {
@@ -47,7 +47,7 @@ export default function TasksPage() {
     return name.trim().charAt(0).toUpperCase();
   };
 
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   return (
     <div className="layout">
@@ -62,22 +62,41 @@ export default function TasksPage() {
         </div>
 
         <div className="page-content">
-          {/* ─── TOOLBAR / FILTERS ─── */}
-          <div className="toolbar" style={{ justifyContent: 'center', marginBottom: 24 }}>
-            <div style={{ 
-              display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)', 
-              padding: '4px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, padding: '0 10px' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 12, background: 'var(--bg-card)', 
+              padding: '6px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-sm)', maxWidth: '100%', boxSizing: 'border-box'
             }}>
-              <button className="btn-nav" onClick={prevMonth} aria-label="Bulan Sebelumnya">
-                <LuChevronLeft size={20} />
-              </button>
-              <div style={{ fontWeight: 800, fontSize: 16, minWidth: 160, textAlign: 'center', color: 'var(--text-primary)' }}>
-                {MONTH_NAMES[calMonth]} {calYear}
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <select 
+                  className="select" 
+                  style={{ background: 'transparent', border: 'none', fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', cursor: 'pointer', padding: '0 20px 0 4px', appearance: 'none' }}
+                  value={calMonth}
+                  onChange={(e) => setCalDate(new Date(calYear, parseInt(e.target.value), 1))}
+                >
+                  {MONTH_NAMES.map((m, i) => (
+                    <option key={m} value={i} style={{ background: 'var(--bg-card)' }}>{m}</option>
+                  ))}
+                </select>
+                <LuChevronDown size={14} style={{ position: 'absolute', right: 0, pointerEvents: 'none', color: 'var(--text-muted)' }} />
               </div>
-              <button className="btn-nav" onClick={nextMonth} aria-label="Bulan Berikutnya">
-                <LuChevronRight size={20} />
-              </button>
+
+              <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
+
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <select 
+                  className="select" 
+                  style={{ background: 'transparent', border: 'none', fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', cursor: 'pointer', padding: '0 20px 0 4px', appearance: 'none' }}
+                  value={calYear}
+                  onChange={(e) => setCalDate(new Date(parseInt(e.target.value), calMonth, 1))}
+                >
+                  {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i).map(y => (
+                    <option key={y} value={y} style={{ background: 'var(--bg-card)' }}>{y}</option>
+                  ))}
+                </select>
+                <LuChevronDown size={14} style={{ position: 'absolute', right: 0, pointerEvents: 'none', color: 'var(--text-muted)' }} />
+              </div>
             </div>
           </div>
 
@@ -119,7 +138,7 @@ export default function TasksPage() {
               width: 24px; height: 24px; display: flex; alignItems: center; justifyContent: center;
             }
             .today .date-num span {
-              background: var(--gold); color: #000; border-radius: 50%;
+              color: var(--gold); font-weight: 800;
             }
             
             .event-item {

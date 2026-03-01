@@ -37,7 +37,7 @@ export default function BookingFormPage() {
     tanggal: '',
     lokasi: '',
     package: '',
-    pricing: [{ label: 'Harga Jasa', amount: '' }], // dynamic breakdown
+    pricing: [{ label: 'Harga Jasa', desc: '', amount: '' }], // dynamic breakdown
     paymentStatus: 'unpaid',
     nominalDibayar: '',
     crewAssignments: [], // [{ crewId, jobRole }]
@@ -69,7 +69,7 @@ export default function BookingFormPage() {
             tanggal: mainBooking.tanggal,
             lokasi: mainBooking.lokasi,
             package: mainBooking.package,
-            pricing: mainBooking.pricing?.length > 0 ? mainBooking.pricing : [{ label: 'Harga Jasa', amount: mainBooking.harga || '' }],
+            pricing: mainBooking.pricing?.length > 0 ? mainBooking.pricing : [{ label: 'Harga Jasa', desc: '', amount: mainBooking.harga || '' }],
             paymentStatus: mainBooking.payment?.status,
             nominalDibayar: mainBooking.payment?.nominalDibayar || '',
             crewAssignments: mainBooking.crewAssignments || [],
@@ -244,48 +244,62 @@ export default function BookingFormPage() {
                   </label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {form.pricing.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <input
-                          className="input"
-                          style={{ flex: 1 }}
-                          placeholder="Nama biaya (cth: Harga Jasa, Transport)"
-                          value={item.label}
-                          onChange={(e) => {
-                            const p = [...form.pricing];
-                            p[idx] = { ...p[idx], label: e.target.value };
-                            setForm({ ...form, pricing: p });
-                          }}
-                        />
-                        <input
-                          className="input"
-                          style={{ minWidth: 90, flex: '0 1 140px' }}
-                          type="number"
-                          placeholder="Nominal"
-                          value={item.amount}
-                          onChange={(e) => {
-                            const p = [...form.pricing];
-                            p[idx] = { ...p[idx], amount: e.target.value };
-                            setForm({ ...form, pricing: p });
-                          }}
-                        />
-                        {form.pricing.length > 1 && (
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-sm"
-                            style={{ padding: '7px 10px' }}
-                            onClick={() => {
-                              const p = form.pricing.filter((_, i) => i !== idx);
+                      <div key={idx} style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 8, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <input
+                            className="input"
+                            style={{ flex: 1 }}
+                            placeholder="Nama biaya (cth: Harga Jasa, Transport)"
+                            value={item.label}
+                            onChange={(e) => {
+                              const p = [...form.pricing];
+                              p[idx] = { ...p[idx], label: e.target.value };
                               setForm({ ...form, pricing: p });
                             }}
-                          >✕</button>
-                        )}
+                          />
+                          <input
+                            className="input"
+                            style={{ minWidth: 120, flex: '0 1 180px' }}
+                            type="number"
+                            placeholder="Nominal"
+                            value={item.amount}
+                            onChange={(e) => {
+                              const p = [...form.pricing];
+                              p[idx] = { ...p[idx], amount: e.target.value };
+                              setForm({ ...form, pricing: p });
+                            }}
+                          />
+                          {form.pricing.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-sm"
+                              style={{ padding: '7px 10px' }}
+                              onClick={() => {
+                                const p = form.pricing.filter((_, i) => i !== idx);
+                                setForm({ ...form, pricing: p });
+                              }}
+                            >✕</button>
+                          )}
+                        </div>
+                        <textarea
+                          className="input"
+                          rows={2}
+                          style={{ fontSize: 13, resize: 'vertical' }}
+                          placeholder="Deskripsi jasa (opsional)"
+                          value={item.desc}
+                          onChange={(e) => {
+                            const p = [...form.pricing];
+                            p[idx] = { ...p[idx], desc: e.target.value };
+                            setForm({ ...form, pricing: p });
+                          }}
+                        />
                       </div>
                     ))}
                     <button
                       type="button"
                       className="btn btn-secondary btn-sm"
                       style={{ alignSelf: 'flex-start', marginTop: 4 }}
-                      onClick={() => setForm({ ...form, pricing: [...form.pricing, { label: '', amount: '' }] })}
+                      onClick={() => setForm({ ...form, pricing: [...form.pricing, { label: '', desc: '', amount: '' }] })}
                     >
                       + Tambah Rincian
                     </button>

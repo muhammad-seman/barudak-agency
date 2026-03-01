@@ -47,6 +47,7 @@ export async function PUT(request, { params }) {
   if (body.pricing !== undefined) {
     body.pricing = body.pricing.map((p) => ({
       label: p.label || 'Biaya',
+      desc: p.desc || '',
       amount: Number(p.amount) || 0,
     }));
     body.harga = body.pricing.reduce((s, p) => s + p.amount, 0);
