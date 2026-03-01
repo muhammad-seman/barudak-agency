@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from './lib/supabase';
 
-const PUBLIC_PATHS = ['/login', '/api/auth/login'];
+const PUBLIC_PATHS = ['/', '/login', '/api/auth/login'];
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;

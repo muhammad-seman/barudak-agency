@@ -8,7 +8,7 @@ import {
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const from = searchParams.get('from') || '/';
+  const from = searchParams.get('from') || '/dashboard';
 
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
@@ -27,7 +27,7 @@ function LoginForm() {
       });
       if (res.ok) {
         // Full page navigation to ensure middleware re-evaluates the new cookie
-        window.location.href = from.startsWith('/') ? from : '/';
+        window.location.href = from.startsWith('/') ? from : '/dashboard';
       } else {
         const data = await res.json();
         setError(data.error || 'Login gagal.');

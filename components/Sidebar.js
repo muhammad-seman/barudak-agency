@@ -16,7 +16,7 @@ import {
 } from 'react-icons/lu';
 
 const navItems = [
-  { href: '/', icon: LuLayoutDashboard, label: 'Dashboard' },
+  { href: '/dashboard', icon: LuLayoutDashboard, label: 'Dashboard' },
   { href: '/bookings', icon: LuClipboardList, label: 'Booking' },
   { href: '/tasks', icon: LuCalendarDays, label: 'Jadwal & Kru' },
   { href: '/clients', icon: LuHeart, label: 'Klien' },
