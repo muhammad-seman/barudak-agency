@@ -111,10 +111,10 @@ export default function BookingPrintPage() {
         </div>
       )}
       <div id="pdf-content" style={{ 
-        maxWidth: 850, 
+        maxWidth: 800, 
         margin: '0 auto', 
         background: '#fff', 
-        padding: 40,
+        padding: '30px 25px',
         boxShadow: isIframe ? 'none' : '0 0 20px rgba(0,0,0,0.1)',
         position: 'relative',
         opacity: 1,
@@ -130,30 +130,30 @@ export default function BookingPrintPage() {
         @media print {
           body { background: #fff !important; color: #000 !important; }
           .no-print { display: none !important; }
-          .print-document { padding: 20px !important; margin: 0 !important; max-width: 100% !important; }
+          .print-document { padding: 15px !important; margin: 0 !important; max-width: 100% !important; }
         }
-        .header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-        .header-left { display: flex; gap: 15px; }
-        .logo { width: 60px; height: 60px; object-fit: contain; }
-        .agency-info h2 { margin: 0; font-size: 18px; font-weight: 700; color: #000; }
-        .agency-info p { margin: 2px 0; font-size: 12px; color: #444; line-height: 1.3; max-width: 400px; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .header-left { display: flex; gap: 12px; }
+        .logo { width: 50px; height: 50px; object-fit: contain; }
+        .agency-info h2 { margin: 0; font-size: 16px; font-weight: 700; color: #000; }
+        .agency-info p { margin: 2px 0; font-size: 11px; color: #444; line-height: 1.3; max-width: 350px; }
         .header-right { text-align: right; max-width: 250px; }
-        .package-title { font-size: 16px; font-weight: 800; color: #000; text-transform: capitalize; }
+        .package-title { font-size: 15px; font-weight: 800; color: #000; text-transform: capitalize; }
         
-        .divider { height: 1px; background-color: #eee; margin-bottom: 25px; }
+        .divider { height: 1px; background-color: #eee; margin-bottom: 20px; }
         
-        .client-grid { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 13px; }
-        .client-section h3 { font-size: 14px; font-weight: 800; color: #000; margin-bottom: 8px; text-transform: uppercase; }
-        .client-section div { margin-bottom: 4px; font-weight: 600; font-size: 14px; }
+        .client-grid { display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 12px; }
+        .client-section h3 { font-size: 13px; font-weight: 800; color: #000; margin-bottom: 6px; text-transform: uppercase; }
+        .client-section div { margin-bottom: 3px; font-weight: 600; font-size: 13px; }
 
         .invoice-details { text-align: right; }
         .invoice-details table { border-collapse: collapse; margin-left: auto; background: #fff; }
-        .invoice-details td { padding: 4px 8px; text-align: left; vertical-align: middle; border: 1px solid #ddd; font-size: 12px; color: #000; }
-        .invoice-details td:first-child { font-weight: 800; text-transform: uppercase; background: #fff; }
+        .invoice-details td { padding: 3px 6px; text-align: left; vertical-align: middle; border: 1px solid #ddd; font-size: 11px; color: #000; }
+        .invoice-details td:first-child { font-weight: 800; text-transform: uppercase; background: #f9f9f9; }
 
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; position: relative; z-index: 20; background: #fff; border: 1px solid #000; }
-        .items-table th { background-color: #fff; color: #000; padding: 12px 15px; text-align: left; font-size: 13px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; }
-        .items-table td { padding: 12px 15px; border: 1px solid #000; font-size: 13px; color: #000; line-height: 1.4; background: #fff; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; position: relative; z-index: 20; background: #fff; border: 1px solid #000; table-layout: fixed; }
+        .items-table th { background-color: #f5f5f5; color: #000; padding: 10px 12px; text-align: left; font-size: 12px; font-weight: 800; text-transform: uppercase; border: 1px solid #000; }
+        .items-table td { padding: 10px 12px; border: 1px solid #000; font-size: 12px; color: #000; line-height: 1.4; background: #fff; word-wrap: break-word; }
         .items-table tr.last-row td { border-bottom: none; }
         
         .table-center { text-align: center !important; }
@@ -195,7 +195,6 @@ export default function BookingPrintPage() {
           </div>
         </div>
         <div className="header-right">
-          <div className="package-title">{booking.categories?.map(c => CATEGORY_LABEL[c] || c).join(' & ')}</div>
           <div className="package-title">{booking.package}</div>
         </div>
       </div>

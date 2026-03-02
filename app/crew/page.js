@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { LuPlus, LuPencil, LuTrash2, LuMessageCircle, LuUsers, LuChevronDown, LuChevronUp } from 'react-icons/lu';
+import { LuPlus, LuPencil, LuTrash2, LuMessageCircle, LuUsers, LuChevronDown, LuChevronUp, LuEye } from 'react-icons/lu';
 
 const CATEGORY_OPTIONS = [
   { key: 'wo', label: 'Wedding Organizer' },
@@ -14,8 +14,10 @@ const CATEGORY_OPTIONS = [
 const CAT_LABEL = { wo: 'WO', wedding_planner: 'WP', mcc: 'MC', wcc: 'WCC' };
 
 const MASTER_ROLES = [
-  'Lead Kru', 'Kru Biasa', 'MC', 'WCC', 'Wedding Planner',
-  'Videografer', 'Fotografer', 'Asisten', 'Lainnya'
+  'stoper N', 'stoper T', 'Leader', 'Mobile', 'Bride Asisten/Lo', 
+  'Grooms Asisten/Lo', 'Logistik', 'VIP Tabel', 'Runner support', 
+  'Media', 'Stage Manager', 'Checker', 'PIC Keluarga CPP', 
+  'PIC Keluarga CPW', 'Qori', 'MC', 'WCC', 'Planner'
 ];
 
 export default function CrewPage() {
@@ -26,6 +28,8 @@ export default function CrewPage() {
   const [deleteId, setDeleteId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedCrew, setSelectedCrew] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
   const [form, setForm] = useState({ name: '', noWA: '', role: [], activeCategories: [], status: 'active' });
 
   const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
@@ -98,6 +102,66 @@ export default function CrewPage() {
           <button className="btn btn-primary" onClick={openNew}><LuPlus size={15} /> Tambah Kru</button>
         </div>
         <div className="page-content">
+          {showDetail && selectedCrew && (
+            <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowDetail(false)}>
+              <div className="modal" style={{ maxWidth: 500 }}>
+                <div className="modal-header">
+                  <span className="modal-title">Detail Kru</span>
+                  <button className="modal-close" onClick={() => setShowDetail(false)}>×</button>
+                </div>
+                <div className="modal-body">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    <div style={{ textAlign: 'center', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--gold)' }}>{selectedCrew.name}</div>
+                      <div style={{ marginTop: 4 }}>
+                        <span className={`badge ${selectedCrew.status === 'active' ? 'badge-paid' : 'badge-unpaid'}`}>
+                          {selectedCrew.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="detail-section">
+                      <div className="form-label" style={{ marginBottom: 8, color: 'var(--text-muted)' }}>Informasi Kontak</div>
+                      <div style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                        <div style={{ fontSize: 13, marginBottom: 4 }}>WhatsApp:</div>
+                        {selectedCrew.noWA ? (
+                          <a className="wa-link" href={`https://wa.me/${selectedCrew.noWA}`} target="_blank" rel="noreferrer" style={{ fontSize: 16, fontWeight: 600 }}>
+                            <LuMessageCircle size={16} /> {selectedCrew.noWA}
+                          </a>
+                        ) : <span className="text-muted">Tidak ada nomor</span>}
+                      </div>
+                    </div>
+
+                    <div className="detail-section">
+                      <div className="form-label" style={{ marginBottom: 8, color: 'var(--text-muted)' }}>Peran / Role</div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {(Array.isArray(selectedCrew.role) ? selectedCrew.role : [selectedCrew.role]).map(r => (
+                          <span key={r} style={{ background: 'var(--bg-secondary)', padding: '6px 12px', borderRadius: 20, border: '1px solid var(--border)', fontSize: 13 }}>
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="detail-section">
+                      <div className="form-label" style={{ marginBottom: 8, color: 'var(--text-muted)' }}>Kategori Layanan</div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {(selectedCrew.activeCategories || []).map(cat => (
+                          <span key={cat} className={`badge badge-${cat}`} style={{ padding: '4px 10px' }}>
+                            {CAT_LABEL[cat] || cat.toUpperCase()}
+                          </span>
+                        ))}
+                        {(selectedCrew.activeCategories || []).length === 0 && <span className="text-muted">Belum ada kategori</span>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-secondary" onClick={() => setShowDetail(false)} style={{ width: '100%' }}>Tutup</button>
+                </div>
+              </div>
+            </div>
+          )}
           {showForm && (
             <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>
               <div className="modal">
@@ -191,7 +255,7 @@ export default function CrewPage() {
                 <tbody>
                   {crew.map((c, i) => (
                     <React.Fragment key={c.id}>
-                      <tr onClick={() => toggleExpand(c.id)} style={{ cursor: 'pointer' }}>
+                      <tr key={c.id}>
                         <td className="text-muted hidden-mobile">{i + 1}</td>
                         <td style={{ fontWeight: 700 }}>{c.name}</td>
                         <td className="hidden-mobile">
@@ -217,13 +281,25 @@ export default function CrewPage() {
                           </span>
                         </td>
                         <td className="hidden-mobile">
-                          <div className="flex gap-2">
-                            <button className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); openEdit(c); }}><LuPencil size={12} /></button>
-                            <button className="btn btn-danger btn-sm" onClick={(e) => { e.stopPropagation(); setDeleteId(c.id); }}><LuTrash2 size={12} /></button>
+                          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                            <button 
+                              className="btn btn-secondary btn-sm" 
+                              style={{ padding: '4px 8px' }}
+                              title="Detail"
+                              onClick={() => { setSelectedCrew(c); setShowDetail(true); }}
+                            >
+                              <LuEye size={14} />
+                            </button>
+                            <button className="btn btn-secondary btn-sm" style={{ padding: '4px 8px' }} onClick={() => openEdit(c)}>
+                              <LuPencil size={12} />
+                            </button>
+                            <button className="btn btn-danger btn-sm" style={{ padding: '4px 8px' }} onClick={() => setDeleteId(c.id)}>
+                              <LuTrash2 size={12} />
+                            </button>
                           </div>
                         </td>
                         <td className="mobile-chevron-td hidden-desktop">
-                          <div className="mobile-chevron">
+                          <div className="mobile-chevron" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
                             {expandedId === c.id ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
                           </div>
                         </td>
@@ -259,6 +335,7 @@ export default function CrewPage() {
                                 </span>
                               </div>
                               <div className="flex gap-2" style={{ marginTop: 8 }}>
+                                <button className="btn btn-secondary flex-1" onClick={() => { setSelectedCrew(c); setShowDetail(true); }}><LuEye size={12} /> Detail</button>
                                 <button className="btn btn-secondary flex-1" onClick={() => openEdit(c)}><LuPencil size={12} /> Edit</button>
                                 <button className="btn btn-danger flex-1" onClick={() => setDeleteId(c.id)}><LuTrash2 size={12} /> Hapus</button>
                               </div>

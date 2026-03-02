@@ -19,6 +19,7 @@ import {
   LuPrinter,
   LuUser,
   LuFileText,
+  LuEye,
 } from "react-icons/lu";
 
 const CATEGORIES = [
@@ -92,6 +93,8 @@ export default function BookingsPage() {
   const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   const startDownload = (id) => {
     setDownloadingId(null);
@@ -144,10 +147,10 @@ export default function BookingsPage() {
   };
 
   const totalRevenue = bookings.reduce((s, b) => s + (b.harga || 0), 0);
-  const totalMasuk = bookings.reduce(
-    (s, b) => s + (b.payment?.nominalDibayar || 0),
-    0,
-  );
+  const totalMasuk = bookings.reduce((s, b) => {
+    const amount = b.payment?.status === "paid" ? (b.harga || 0) : (b.payment?.nominalDibayar || 0);
+    return s + amount;
+  }, 0);
   const sisaTagihan = totalRevenue - totalMasuk;
 
   return (
@@ -276,6 +279,107 @@ export default function BookingsPage() {
             })}
           </div>
 
+          {showDetail && selectedBooking && (
+            <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowDetail(false)}>
+              <div className="modal" style={{ maxWidth: 650 }}>
+                <div className="modal-header">
+                  <span className="modal-title">Detail Event Booking</span>
+                  <button className="modal-close" onClick={() => setShowDetail(false)}>×</button>
+                </div>
+                <div className="modal-body">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+                    {/* Section 1: Client & Event */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <div>
+                        <div className="form-label" style={{ marginBottom: 6, color: 'var(--text-muted)' }}>Klien / Pasangan</div>
+                        <div style={{ fontSize: 18, fontWeight: 800 }}>{selectedBooking.client?.namaPasangan || '—'}</div>
+                        {selectedBooking.client?.noWA && (
+                          <a className="wa-link" href={`https://wa.me/${selectedBooking.client.noWA}`} target="_blank" rel="noreferrer" style={{ marginTop: 4, display: 'inline-flex' }}>
+                            <LuMessageCircle size={14} /> {selectedBooking.client.noWA}
+                          </a>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <div className="form-label" style={{ marginBottom: 6, color: 'var(--text-muted)' }}>Waktu & Lokasi</div>
+                        <div style={{ fontWeight: 600 }}>{selectedBooking.tanggal} ({selectedBooking.hari})</div>
+                        <div style={{ fontSize: 13, marginTop: 2 }}>{selectedBooking.lokasi}</div>
+                      </div>
+
+                      <div>
+                        <div className="form-label" style={{ marginBottom: 6, color: 'var(--text-muted)' }}>Layanan & Package</div>
+                        <div className="flex gap-1" style={{ marginBottom: 8, flexWrap: 'wrap' }}>
+                          {(selectedBooking.categories?.length > 0 ? selectedBooking.categories : [selectedBooking.category]).map(cat => (
+                            <span key={cat} className="badge badge-wo" style={{ fontSize: 10 }}>{CATEGORIES.find(c => c.key === cat)?.label || cat}</span>
+                          ))}
+                        </div>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '6px 12px', borderRadius: 6, fontSize: 13, border: '1px solid var(--border)', display: 'inline-block' }}>
+                          {selectedBooking.package}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: Pricing & Payment */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <div>
+                        <div className="form-label" style={{ marginBottom: 6, color: 'var(--text-muted)' }}>Rincian Biaya</div>
+                        <div style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                          {(selectedBooking.pricing || []).map((p, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: idx === selectedBooking.pricing.length - 1 ? 0 : 8 }}>
+                              <span>{p.label}</span>
+                              <span style={{ fontWeight: 600 }}>{formatRupiah(p.amount)}</span>
+                            </div>
+                          ))}
+                          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontWeight: 800, color: 'var(--gold)', fontSize: 15 }}>
+                            <span>TOTAL HARGA</span>
+                            <span>{formatRupiah(selectedBooking.harga)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="form-label" style={{ marginBottom: 6, color: 'var(--text-muted)' }}>Status Pembayaran</div>
+                        <PaymentBadge status={selectedBooking.payment?.status} nominalDibayar={selectedBooking.payment?.nominalDibayar} />
+                        <div style={{ fontSize: 12, marginTop: 8, color: 'var(--text-muted)' }}>
+                          Sisa Tagihan: <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{formatRupiah(selectedBooking.harga - (selectedBooking.payment?.nominalDibayar || 0))}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: Crew Placement (Full Width) */}
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <div className="form-label" style={{ marginBottom: 8, color: 'var(--text-muted)' }}>Kru Bertugas</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+                        {(selectedBooking.crew || []).map((c, idx) => (
+                          <div key={idx} style={{ background: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                            <div style={{ fontWeight: 700, fontSize: 14 }}>{c.name}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{c.jobRole || '—'}</div>
+                          </div>
+                        ))}
+                        {(selectedBooking.crew || []).length === 0 && <div className="text-muted" style={{ padding: 10 }}>Belum ada kru yang ditugaskan.</div>}
+                      </div>
+                    </div>
+
+                    {/* Section 4: Notes */}
+                    {selectedBooking.catatan && (
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <div className="form-label" style={{ marginBottom: 6, color: 'var(--text-muted)' }}>Catatan Tambahan</div>
+                        <div style={{ background: 'rgba(212,168,67,0.05)', padding: 12, borderRadius: 8, border: '1px solid var(--gold)', fontSize: 13, fontStyle: 'italic' }}>
+                          {selectedBooking.catatan}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="modal-footer" style={{ gap: 10 }}>
+                  <button className="btn btn-secondary" onClick={() => setShowDetail(false)} style={{ flex: 1 }}>Tutup</button>
+                  <button className="btn btn-primary" onClick={() => { startDownload(selectedBooking.id); }} style={{ flex: 1 }}>
+                    <LuPrinter size={15} /> Unduh PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="card" style={{ padding: 0 }}>
             {loading ? (
               <div className="loading">Memuat data...</div>
@@ -359,10 +463,7 @@ export default function BookingsPage() {
                             : [];
                       return (
                         <React.Fragment key={b.id}>
-                          <tr
-                            onClick={() => toggleExpand(b.id)}
-                            style={{ cursor: "pointer" }}
-                          >
+                          <tr>
                             <td
                               className="hidden-mobile text-muted"
                               style={{ textAlign: "center" }}
@@ -523,6 +624,18 @@ export default function BookingsPage() {
                                 <button
                                   className="btn btn-secondary btn-sm"
                                   style={{ padding: "4px 8px" }}
+                                  title="Detail"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedBooking(b);
+                                    setShowDetail(true);
+                                  }}
+                                >
+                                  <LuEye size={14} />
+                                </button>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ padding: "4px 8px" }}
                                   title="Print PDF"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -555,7 +668,7 @@ export default function BookingsPage() {
                               className="hidden-desktop"
                               style={{ textAlign: "center" }}
                             >
-                              <div className="mobile-chevron">
+                              <div className="mobile-chevron" onClick={() => setExpandedId(expandedId === b.id ? null : b.id)}>
                                 {expandedId === b.id ? (
                                   <LuChevronUp size={16} />
                                 ) : (
@@ -702,8 +815,24 @@ export default function BookingsPage() {
                                       display: "flex",
                                       justifyContent: "flex-start",
                                       gap: 10,
+                                      flexWrap: "wrap"
                                     }}
                                   >
+                                    <button
+                                      className="btn btn-secondary btn-sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedBooking(b);
+                                        setShowDetail(true);
+                                      }}
+                                      style={{
+                                        flex: 1,
+                                        justifyContent: "center",
+                                        minWidth: '45%'
+                                      }}
+                                    >
+                                      <LuEye size={14} /> Detail
+                                    </button>
                                     <button
                                       className="btn btn-secondary btn-sm"
                                       onClick={(e) => {
@@ -711,11 +840,12 @@ export default function BookingsPage() {
                                         startDownload(b.id);
                                       }}
                                       style={{
-                                        flex: 2,
+                                        flex: 1,
                                         justifyContent: "center",
                                         background: "var(--gold)",
                                         color: "#000",
                                         borderColor: "var(--gold)",
+                                        minWidth: '45%'
                                       }}
                                     >
                                       <LuPrinter size={14} /> Unduh PDF
@@ -726,6 +856,7 @@ export default function BookingsPage() {
                                       style={{
                                         flex: 1,
                                         justifyContent: "center",
+                                        minWidth: '45%'
                                       }}
                                       onClick={(e) => e.stopPropagation()}
                                     >
@@ -736,6 +867,7 @@ export default function BookingsPage() {
                                       style={{
                                         flex: 1,
                                         justifyContent: "center",
+                                        minWidth: '45%'
                                       }}
                                       onClick={(e) => {
                                         e.stopPropagation();

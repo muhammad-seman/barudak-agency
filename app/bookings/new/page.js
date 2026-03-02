@@ -13,8 +13,10 @@ const CATEGORIES = [
 ];
 
 const MASTER_ROLES = [
-  'Lead Kru', 'Kru Biasa', 'MC', 'WCC', 'Wedding Planner',
-  'Videografer', 'Fotografer', 'Asisten', 'Lainnya'
+  'stoper N', 'stoper T', 'Leader', 'Mobile', 'Bride Asisten/Lo', 
+  'Grooms Asisten/Lo', 'Logistik', 'VIP Tabel', 'Runner support', 
+  'Media', 'Stage Manager', 'Checker', 'PIC Keluarga CPP', 
+  'PIC Keluarga CPW', 'Qori', 'MC', 'WCC', 'Planner'
 ];
 
 const PAYMENT_STATUS = [
@@ -124,19 +126,26 @@ export default function BookingFormPage() {
     if (!form.clientId || !form.tanggal || !form.lokasi || !form.package || totalHarga === 0 || (!isEdit && (!form.categories || form.categories.length === 0))) {
       return alert('Mohon lengkapi semua field wajib (termasuk minimal satu kategori dan harga).');
     }
+
+    // Auto-fill nominalDibayar if status is 'paid'
+    const finalForm = { ...form };
+    if (finalForm.paymentStatus === 'paid') {
+      finalForm.nominalDibayar = totalHarga;
+    }
+
     setLoading(true);
 
     if (isEdit) {
       await fetch(`/api/bookings/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(finalForm),
       });
     } else {
       await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(finalForm),
       });
     }
     

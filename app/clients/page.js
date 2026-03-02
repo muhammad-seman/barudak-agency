@@ -151,7 +151,7 @@ export default function ClientsPage() {
                 <tbody>
                   {filtered.map((c, i) => {
                     const cb = getClientBookings(c.id);
-                    const cats = [...new Set(cb.map((b) => b.category))];
+                    const cats = [...new Set(cb.flatMap((b) => b.categories || (b.category ? [b.category] : [])).filter(Boolean))];
                     return (
                       <React.Fragment key={c.id}>
                         <tr onClick={() => toggleExpand(c.id)} style={{ cursor: 'pointer' }}>
@@ -165,8 +165,8 @@ export default function ClientsPage() {
                           <td className="hidden-mobile" style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.alamat || '—'}</td>
                           <td className="hidden-mobile">
                             <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-                              {cats.map((c, idx) => (
-                                <span key={`${c}-${idx}`} className={`badge badge-${c}`}>{CATEGORY_LABEL[c] || c}</span>
+                              {cats.map((cat, idx) => (
+                                <span key={`${cat}-${idx}`} className={`badge badge-${cat}`}>{CATEGORY_LABEL[cat] || cat}</span>
                               ))}
                               {cats.length === 0 && <span className="text-muted">—</span>}
                             </div>
@@ -204,8 +204,8 @@ export default function ClientsPage() {
                                   <span className="accordion-label">Layanan</span>
                                   <span className="accordion-value" style={{ width: '100%', textAlign: 'left' }}>
                                     <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-                                      {cats.map((cat) => (
-                                        <span key={cat} className={`badge badge-${cat}`}>{CATEGORY_LABEL[cat]}</span>
+                                      {cats.map((cat, idx) => (
+                                        <span key={`${cat}-${idx}`} className={`badge badge-${cat}`}>{CATEGORY_LABEL[cat] || cat}</span>
                                       ))}
                                       {cats.length === 0 && <span className="text-muted">—</span>}
                                     </div>
